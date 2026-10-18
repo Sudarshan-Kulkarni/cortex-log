@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.database import init_db
-from app.routers import calendar, flashcards
+from app.routers import anki, calendar, flashcards
 from app.worker import start_worker_and_enqueue_pending
 
 
@@ -32,6 +32,7 @@ app.add_middleware(
 
 app.include_router(calendar.router)
 app.include_router(flashcards.router)
+app.include_router(anki.router)
 
 
 @app.get("/api/health")

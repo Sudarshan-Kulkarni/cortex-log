@@ -92,3 +92,39 @@ class LoggedBlogAccordionResponse(BaseModel):
     error_message: str | None = None
     summary: str | None = None
     flashcards: list[FlashcardItemResponse] = []
+
+
+class AnkiQueuedCardPayload(BaseModel):
+    user_flashcard_id: int
+    blog_id: int
+    blog_title: str
+    source_url: str | None = None
+    deck_name: str = "Cortex Log"
+    question: str
+    options: list[str]
+    answer: str
+    front_html: str
+    back_html: str
+    ack_id: str | None = None
+
+
+class AnkiPullResponse(BaseModel):
+    deck_name: str = "Cortex Log"
+    count: int
+    cards: list[AnkiQueuedCardPayload]
+
+
+class AnkiAckRequest(BaseModel):
+    user_flashcard_ids: list[int] = Field(default_factory=list)
+    ack_ids: list[str] = Field(default_factory=list)
+
+
+class AnkiAckResponse(BaseModel):
+    synced_count: int
+    user_flashcard_ids: list[int]
+
+
+class AnkiQueueStatusResponse(BaseModel):
+    deck_name: str = "Cortex Log"
+    queued_count: int
+    synced_count: int

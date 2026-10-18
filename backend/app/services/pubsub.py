@@ -183,7 +183,7 @@ def pull_anki_messages(max_messages: int = 50) -> dict[int, str]:
             sub_path = subscriber.subscription_path(GCP_PROJECT_ID, PUBSUB_ANKI_SUB)
             response = subscriber.pull(
                 request={"subscription": sub_path, "max_messages": max_messages},
-                timeout=10.0,
+                timeout=4.0,
             )
             for received in response.received_messages:
                 try:

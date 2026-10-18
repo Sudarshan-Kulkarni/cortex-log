@@ -5,8 +5,10 @@ import {
   AlertTriangle,
   BookOpen,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
   ExternalLink,
   Eye,
   EyeOff,
@@ -17,12 +19,16 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Send,
   Sparkles,
   X,
 } from "lucide-react";
 import {
+  AnkiQueueStatus,
+  approveFlashcard,
   createCustomFlashcard,
   dismissFlashcard,
+  fetchAnkiQueueStatus,
   fetchLoggedBlogsWithFlashcards,
   FlashcardItem,
   LoggedBlogAccordion,
@@ -44,6 +50,11 @@ export default function FlashcardsTab({
   onSwitchToCalendar,
 }: FlashcardsTabProps) {
   const [blogs, setBlogs] = useState<LoggedBlogAccordion[]>([]);
+  const [ankiStatus, setAnkiStatus] = useState<AnkiQueueStatus>({
+    deck_name: "Cortex Log",
+    queued_count: 0,
+    synced_count: 0,
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedBlogIds, setExpandedBlogIds] = useState<
@@ -58,7 +69,7 @@ export default function FlashcardsTab({
     Record<number, number>
   >({});
 
-  // Per-card inline editing state
+  // Per-card inline editing & curation action state
   const [editingCardId, setEditingCardId] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<CardDraft>({
     question: "",
@@ -67,6 +78,7 @@ export default function FlashcardsTab({
   });
   const [savingCardId, setSavingCardId] = useState<number | null>(null);
   const [dismissingCardId, setDismissingCardId] = useState<number | null>(null);
+  const [approvingCardId, setApprovingCardId] = useState<number | null>(null);
 
   // Per-blog "+ Add Custom Card" form state
   const [showCustomFormForBlog, setShowCustomFormForBlog] = useState<
@@ -94,8 +106,16 @@ export default function FlashcardsTab({
   const loadBlogs = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const data = await fetchLoggedBlogsWithFlashcards();
+      const [data, queueInfo] = await Promise.all([
+        fetchLoggedBlogsWithFlashcards(),
+        fetchAnkiQueueStatus().catch(() => ({
+          deck_name: "Cortex Log",
+          queued_count: 0,
+          synced_count: 0,
+        })),
+      ]);
       setBlogs(data);
+      setAnkiStatus(queueInfo);
       setError(null);
       setExpandedBlogIds((prev) => {
         if (Object.keys(prev).length === 0 && data.length > 0) {
@@ -116,16 +136,17 @@ export default function FlashcardsTab({
     loadBlogs(false);
   }, [loadBlogs]);
 
-  // Poll every 2.5s while any blog is in "processing" status so the accordion updates live
+  // Poll every 3s while any blog is "processing" or any card is "queued_for_anki"
   useEffect(() => {
     const hasProcessing = blogs.some((b) => b.status === "processing");
-    if (!hasProcessing) return;
+    const hasQueuedAnki = ankiStatus.queued_count > 0;
+    if (!hasProcessing && !hasQueuedAnki) return;
 
     const timer = setInterval(() => {
       loadBlogs(true);
-    }, 2500);
+    }, 3000);
     return () => clearInterval(timer);
-  }, [blogs, loadBlogs]);
+  }, [blogs, ankiStatus.queued_count, loadBlogs]);
 
   const toggleAccordion = (blogId: number) => {
     setExpandedBlogIds((prev) => ({
@@ -205,10 +226,38 @@ export default function FlashcardsTab({
             : b
         )
       );
+      loadBlogs(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to dismiss card.");
     } finally {
       setDismissingCardId(null);
+    }
+  };
+
+  const handleApproveCard = async (card: FlashcardItem) => {
+    setApprovingCardId(card.card_id);
+    setError(null);
+    try {
+      const updated = await approveFlashcard(card.card_id);
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b.blog_id === card.blog_id
+            ? {
+                ...b,
+                flashcards: b.flashcards.map((fc) =>
+                  fc.card_id === card.card_id ? updated : fc
+                ),
+              }
+            : b
+        )
+      );
+      loadBlogs(true);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to approve card for Anki."
+      );
+    } finally {
+      setApprovingCardId(null);
     }
   };
 
@@ -344,28 +393,68 @@ export default function FlashcardsTab({
 
   return (
     <div className="space-y-5">
-      {/* Top Dashboard Bar */}
+      {/* Top Bar: Anki Delivery Queue Status & Controls */}
       <div className="blueprint-card p-4 flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="font-mono text-xs uppercase tracking-widest text-ink-muted block">
-            Pub/Sub Extraction &amp; Per-User Curation Pipeline
+            Pub/Sub Extraction &amp; Anki Delivery Queue
           </span>
           <h2 className="font-mono text-xl font-bold">
             Logged Blogs &amp; Flashcard Accordions ({blogs.length})
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Anki Queue Status Counters */}
+          <div
+            data-testid="anki-queue-status-bar"
+            className="flex items-center gap-3 bg-manila px-3 py-1.5 border border-ink font-mono text-xs"
+          >
+            <span className="text-ink-muted">
+              Deck: <strong className="text-ink">{ankiStatus.deck_name}</strong>
+            </span>
+            <span className="text-ink-muted">|</span>
+            <span className="inline-flex items-center gap-1 font-semibold">
+              <Clock className="w-3.5 h-3.5 text-status-yellow" />
+              {ankiStatus.queued_count} Queued for Anki
+            </span>
+            <span className="text-ink-muted">|</span>
+            <span className="inline-flex items-center gap-1 font-semibold text-status-green">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {ankiStatus.synced_count} Synced to Anki
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={() => loadBlogs(false)}
             className="blueprint-btn-secondary"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Refresh Status
+            Refresh Sync Status
           </button>
         </div>
       </div>
+
+      {/* Helpful banner when cards are queued waiting for Anki Desktop */}
+      {ankiStatus.queued_count > 0 && (
+        <div className="blueprint-card p-3.5 bg-status-yellow/15 border-ink font-mono text-xs flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Send className="w-4 h-4 text-ink shrink-0" />
+            <span>
+              <strong>{ankiStatus.queued_count} card(s)</strong> waiting in the{" "}
+              <code>anki-delivery</code> queue. Open{" "}
+              <strong>Anki Desktop</strong> (or click{" "}
+              <code>Tools → Sync Cortex Log Cards</code>) to pull them into your{" "}
+              <strong>&ldquo;{ankiStatus.deck_name}&rdquo;</strong> deck.
+            </span>
+          </div>
+          <span className="text-[11px] text-ink-muted">
+            Install once:{" "}
+            <code>./anki_addon/cortex_log_sync/install_addon.sh</code>
+          </span>
+        </div>
+      )}
 
       {error && (
         <div className="p-3 border border-status-red bg-status-red/10 text-status-red font-mono text-xs">
@@ -735,6 +824,10 @@ export default function FlashcardsTab({
                           const isSaving = savingCardId === card.card_id;
                           const isDismissing =
                             dismissingCardId === card.card_id;
+                          const isApproving =
+                            approvingCardId === card.card_id;
+                          const isQueued = card.status === "queued_for_anki";
+                          const isSynced = card.status === "synced_to_anki";
 
                           return (
                             <div
@@ -778,8 +871,20 @@ export default function FlashcardsTab({
                                         Edit
                                       </button>
                                     )}
-                                    <span className="uppercase px-1.5 py-0.5 border border-ink bg-manila text-ink font-semibold">
-                                      {card.status.replace(/_/g, " ")}
+                                    <span
+                                      className={`uppercase px-1.5 py-0.5 border border-ink font-semibold ${
+                                        isSynced
+                                          ? "bg-status-green text-white"
+                                          : isQueued
+                                          ? "bg-status-yellow text-ink"
+                                          : "bg-manila text-ink"
+                                      }`}
+                                    >
+                                      {isSynced
+                                        ? "Synced to Anki"
+                                        : isQueued
+                                        ? "Queued for Anki"
+                                        : card.status.replace(/_/g, " ")}
                                     </span>
                                   </div>
                                 </div>
@@ -955,7 +1060,11 @@ export default function FlashcardsTab({
                               {/* Bottom Action Bar (✓ / ✕ buttons) */}
                               <div className="pt-3 border-t border-ink flex items-center justify-between gap-2">
                                 <span className="font-mono text-[10px] uppercase text-ink-muted">
-                                  Per-User Curation
+                                  {isSynced
+                                    ? "In Anki Deck"
+                                    : isQueued
+                                    ? "Waiting in Pub/Sub"
+                                    : "Per-User Curation"}
                                 </span>
                                 <div className="flex items-center gap-2">
                                   <button
@@ -975,11 +1084,22 @@ export default function FlashcardsTab({
                                   </button>
                                   <button
                                     type="button"
-                                    title="Approve & Queue for Anki (wired in Slice 4)"
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-ink bg-status-green text-white font-mono text-xs font-bold shadow-[1px_1px_0px_#1C1B18]"
+                                    disabled={isApproving || isSynced}
+                                    onClick={() => handleApproveCard(card)}
+                                    data-testid={`approve-card-btn-${card.card_id}`}
+                                    title="Approve & Queue for Anki via Pub/Sub"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-ink bg-status-green text-white font-mono text-xs font-bold shadow-[1px_1px_0px_#1C1B18] hover:opacity-90 disabled:opacity-60"
                                   >
-                                    <Check className="w-3.5 h-3.5" />
-                                    Approve
+                                    {isApproving ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Check className="w-3.5 h-3.5" />
+                                    )}
+                                    {isSynced
+                                      ? "Synced"
+                                      : isQueued
+                                      ? "Re-queue"
+                                      : "Approve"}
                                   </button>
                                 </div>
                               </div>

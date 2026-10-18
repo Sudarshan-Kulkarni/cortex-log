@@ -39,7 +39,7 @@ Build mode: learn
   Learner check: Expand a processed blog on the Flashcards tab, edit a card's question or options, add a custom card, and click `✕` on another card—then refresh the page to confirm your edits and custom card persist and the dismissed card stays hidden.
   Commit: `Add per-user flashcard inline editing, custom cards, and dismissal`
 
-- [ ] **4. Approve cards (`✓`) onto the Anki delivery queue and sync them into Anki Desktop via the custom add-on**
+- [x] **4. Approve cards (`✓`) onto the Anki delivery queue and sync them into Anki Desktop via the custom add-on**
   Becomes usable: Clicking `✓` on a flashcard marks it `Queued for Anki` and publishes it to the `anki-delivery` message queue; opening Anki Desktop (or clicking `Tools -> Sync Cortex Log Cards` via the `cortex_log_sync` add-on) pulls queued cards from the backend, creates the `"Cortex Log"` deck, adds the formatted Multiple-Choice notes, and acknowledges delivery so the cards flip to `Synced to Anki`.
   Why now: Completes the end-to-end journey from daily reading log to local Anki deck once card extraction and per-user curation are in place.
   PRD ref: `prd.md > The Core Journey` (steps 6-7), `prd.md > 4. Queued Delivery to Anki`, `prd.md > States and Boundaries`

@@ -73,6 +73,12 @@ export interface CreateCustomFlashcardPayload {
   answer: string;
 }
 
+export interface AnkiQueueStatus {
+  deck_name: string;
+  queued_count: number;
+  synced_count: number;
+}
+
 export function getLocalTodayIso(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -216,6 +222,33 @@ export async function dismissFlashcard(cardId: number): Promise<FlashcardItem> {
       // ignore
     }
     throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function approveFlashcard(cardId: number): Promise<FlashcardItem> {
+  const res = await fetch(`${API_BASE_URL}/api/flashcards/${cardId}/approve`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    let message = `Failed to approve flashcard for Anki (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.detail) message = errData.detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function fetchAnkiQueueStatus(): Promise<AnkiQueueStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/anki/status`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load Anki queue status (${res.status})`);
   }
   return res.json();
 }

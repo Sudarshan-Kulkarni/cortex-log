@@ -1,0 +1,6 @@
+{
+  "backend_url": "http://localhost:8010",
+  "user_id": 1,
+  "deck_name": "Cortex Log",
+  "auto_sync_on_startup": true
+}
