@@ -1,0 +1,36 @@
+# Devpost private learner profile
+/devpost/learner-profile.md
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+*credentials*.json
+*service-account*.json
+*service_account*.json
+gcp-key*.json
+
+# Terraform state & provider binaries
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+*.sqlite3
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+
+# macOS
+.DS_Store

@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-manila: #F3E9D2;
+  --bg-card: #FAF3E3;
+  --ink-primary: #1C1B18;
+  --ink-muted: #57534E;
+}
+
+body {
+  background-color: var(--bg-manila);
+  color: var(--ink-primary);
+  background-image: 
+    linear-gradient(to right, rgba(28, 27, 24, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(28, 27, 24, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  min-height: 100vh;
+}
+
+@layer components {
+  .blueprint-card {
+    @apply bg-manila-card border border-ink shadow-blueprint;
+  }
+
+  .blueprint-input {
+    @apply w-full bg-manila-card border border-ink px-3 py-2 text-sm text-ink placeholder:text-ink-muted/70 focus:outline-none focus:ring-2 focus:ring-ink;
+  }
+
+  .blueprint-btn {
+    @apply inline-flex items-center justify-center gap-1.5 border border-ink bg-ink text-manila-card font-mono text-xs uppercase tracking-wider px-4 py-2 shadow-blueprint transition-transform active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50;
+  }
+
+  .blueprint-btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 border border-ink bg-manila-card text-ink font-mono text-xs uppercase tracking-wider px-3 py-1.5 shadow-blueprint hover:bg-manila-muted transition-colors disabled:opacity-50;
+  }
+}
