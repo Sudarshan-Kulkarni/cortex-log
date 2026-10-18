@@ -30,12 +30,21 @@ PUBSUB_BLOG_SUB: str = os.getenv("PUBSUB_BLOG_SUB", "blog-ingestion-sub").strip(
 PUBSUB_ANKI_TOPIC: str = os.getenv("PUBSUB_ANKI_TOPIC", "anki-delivery").strip()
 PUBSUB_ANKI_SUB: str = os.getenv("PUBSUB_ANKI_SUB", "anki-delivery-sub").strip()
 
-CORS_ORIGINS: list[str] = [
+_env_origins = [
     origin.strip()
-    for origin in os.getenv(
-        "CORS_ORIGINS", "http://localhost:3010,http://localhost:3000"
-    ).split(",")
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
     if origin.strip()
 ]
+CORS_ORIGINS: list[str] = list(
+    dict.fromkeys(
+        [
+            "http://localhost:3010",
+            "http://127.0.0.1:3010",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            *_env_origins,
+        ]
+    )
+)
 
 DEFAULT_USER_ID: int = 1

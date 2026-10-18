@@ -36,6 +36,31 @@ export interface LogBlogPayload {
   title?: string;
 }
 
+export interface FlashcardItem {
+  card_id: number;
+  canonical_flashcard_id: number | null;
+  blog_id: number;
+  chunk_index: number;
+  question: string;
+  options: string[];
+  answer: string;
+  status: "candidate" | "dismissed" | "queued_for_anki" | "synced_to_anki" | string;
+  is_custom: boolean;
+  is_edited: boolean;
+}
+
+export interface LoggedBlogAccordion {
+  blog_id: number;
+  title: string;
+  canonical_url: string | null;
+  logged_date: string;
+  all_logged_dates: string[];
+  status: "processing" | "ready" | "scrape_failed" | string;
+  error_message: string | null;
+  summary: string | null;
+  flashcards: FlashcardItem[];
+}
+
 export function getLocalTodayIso(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -77,6 +102,45 @@ export async function logBlogEntry(
       if (errData.detail) message = errData.detail;
     } catch {
       // ignore json parse failure
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function fetchLoggedBlogsWithFlashcards(): Promise<
+  LoggedBlogAccordion[]
+> {
+  const res = await fetch(`${API_BASE_URL}/api/blogs/logged`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to load logged blogs (${res.status}): ${errText}`);
+  }
+  return res.json();
+}
+
+export async function submitBlogRawText(
+  blogId: number,
+  rawText: string,
+  title?: string
+): Promise<LoggedBlogEntry> {
+  const res = await fetch(`${API_BASE_URL}/api/blogs/${blogId}/raw-text`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      raw_text: rawText,
+      title: title?.trim() || undefined,
+    }),
+  });
+  if (!res.ok) {
+    let message = `Failed to submit raw text (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.detail) message = errData.detail;
+    } catch {
+      // ignore
     }
     throw new Error(message);
   }

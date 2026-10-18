@@ -12,7 +12,9 @@ from app.schemas import (
     DayCalendarStatus,
     LogBlogRequest,
     LoggedBlogEntry,
+    SubmitRawTextRequest,
 )
+from app.services.pubsub import publish_blog_ingestion
 from app.services.scraper import (
     compute_content_hash,
     derive_initial_title,
@@ -26,7 +28,9 @@ def _calculate_streak(logged_dates: set[date], today_date: date) -> int:
     """Calculate consecutive reading streak up to today (or yesterday if today isn't logged yet)."""
     if not logged_dates:
         return 0
-    cursor = today_date if today_date in logged_dates else (today_date - timedelta(days=1))
+    cursor = (
+        today_date if today_date in logged_dates else (today_date - timedelta(days=1))
+    )
     streak = 0
     while cursor in logged_dates:
         streak += 1
@@ -56,20 +60,17 @@ def get_calendar_month(
     if month:
         try:
             year_num, month_num = map(int, month.split("-"))
-            first_day = date(year_num, month_num, 1)
+            _ = date(year_num, month_num, 1)
         except ValueError as exc:
             raise HTTPException(
                 status_code=400, detail="Invalid 'month' format. Expected YYYY-MM."
             ) from exc
     else:
         year_num, month_num = today_date.year, today_date.month
-        first_day = date(year_num, month_num, 1)
 
     _, days_in_month = calendar.monthrange(year_num, month_num)
     month_str = f"{year_num:04d}-{month_num:02d}"
 
-    # Fetch all user_blogs for the user to compute overall streak and total count,
-    # as well as the entries in the requested month.
     rows = db.execute(
         select(UserBlog, Blog)
         .join(Blog, UserBlog.blog_id == Blog.id)
@@ -145,16 +146,17 @@ def log_blog(
         canonical_url=canonical_url, raw_text=raw_text if raw_text else None
     )
 
-    # Check if canonical blog already exists by canonical_url or content_hash
     conditions = [Blog.content_hash == content_hash]
     if canonical_url:
         conditions.append(Blog.canonical_url == canonical_url)
 
-    existing_blog = db.execute(
-        select(Blog).where(or_(*conditions))
-    ).scalars().first()
+    existing_blog = (
+        db.execute(select(Blog).where(or_(*conditions))).scalars().first()
+    )
 
     deduplicated = False
+    should_enqueue = False
+
     if existing_blog is not None:
         blog = existing_blog
         deduplicated = True
@@ -162,6 +164,11 @@ def log_blog(
             blog.title = explicit_title
         if raw_text and not blog.raw_text:
             blog.raw_text = raw_text
+            blog.status = "processing"
+            blog.error_message = None
+            should_enqueue = True
+        elif blog.status == "processing":
+            should_enqueue = True
         db.commit()
         db.refresh(blog)
     else:
@@ -180,8 +187,8 @@ def log_blog(
         db.add(blog)
         db.commit()
         db.refresh(blog)
+        should_enqueue = True
 
-    # Link blog to user_blogs for the selected calendar date (avoid duplicate join row on same date)
     existing_user_blog = db.execute(
         select(UserBlog).where(
             UserBlog.user_id == DEFAULT_USER_ID,
@@ -202,6 +209,9 @@ def log_blog(
         db.commit()
         db.refresh(user_blog)
 
+    if should_enqueue:
+        publish_blog_ingestion(blog.id)
+
     return LoggedBlogEntry(
         user_blog_id=user_blog.id,
         blog_id=blog.id,
@@ -212,4 +222,63 @@ def log_blog(
         error_message=blog.error_message,
         summary=blog.summary,
         deduplicated=deduplicated,
+    )
+
+
+@router.post("/blogs/{blog_id}/raw-text", response_model=LoggedBlogEntry)
+def submit_raw_text_for_blog(
+    blog_id: int,
+    payload: SubmitRawTextRequest,
+    db: Session = Depends(get_db),
+) -> LoggedBlogEntry:
+    blog = db.execute(select(Blog).where(Blog.id == blog_id)).scalar_one_or_none()
+    if blog is None:
+        raise HTTPException(status_code=404, detail=f"Blog {blog_id} not found.")
+
+    cleaned_text = payload.raw_text.strip()
+    if len(cleaned_text) < 20:
+        raise HTTPException(
+            status_code=400,
+            detail="Please provide at least a paragraph of article text.",
+        )
+
+    blog.raw_text = cleaned_text
+    if payload.title and payload.title.strip():
+        blog.title = payload.title.strip()[:500]
+    blog.status = "processing"
+    blog.error_message = None
+    db.commit()
+    db.refresh(blog)
+
+    publish_blog_ingestion(blog.id)
+
+    user_blog = (
+        db.execute(
+            select(UserBlog)
+            .where(
+                UserBlog.user_id == DEFAULT_USER_ID,
+                UserBlog.blog_id == blog.id,
+            )
+            .order_by(UserBlog.logged_date.desc())
+        )
+        .scalars()
+        .first()
+    )
+
+    logged_date_str = (
+        user_blog.logged_date.isoformat()
+        if user_blog
+        else date.today().isoformat()
+    )
+
+    return LoggedBlogEntry(
+        user_blog_id=user_blog.id if user_blog else 0,
+        blog_id=blog.id,
+        logged_date=logged_date_str,
+        canonical_url=blog.canonical_url,
+        title=blog.title,
+        status=blog.status,
+        error_message=blog.error_message,
+        summary=blog.summary,
+        deduplicated=False,
     )

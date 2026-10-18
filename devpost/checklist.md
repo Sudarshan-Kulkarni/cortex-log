@@ -19,7 +19,7 @@ Build mode: learn
   Learner check: Open `http://localhost:3010`, verify today has a yellow circle on the manila-paper calendar, click a day to paste a blog URL and click "Log it", and confirm the corner circle turns green and stays green after refreshing the page.
   Commit: `Add monthly reading calendar and deduplicated blog logging`
 
-- [ ] **2. Scrape logged blogs via the message queue, generate chunked flashcards with Gemini, and view them in the Flashcards accordion**
+- [x] **2. Scrape logged blogs via the message queue, generate chunked flashcards with Gemini, and view them in the Flashcards accordion**
   Becomes usable: Logging a new blog dispatches a job over the `blog-ingestion` message queue (GCP Pub/Sub with local async fallback); the background worker scrapes the article, chunks the text, calls Gemini (`gemini-2.5-flash`) to extract a summary and detail-focused multiple-choice flashcards, and renders them in a 2-column grid inside the expandable blog accordion on the Flashcards tab (with an inline raw-text fallback if scraping fails).
   Why now: Proves the unique kernel and highest-risk integrations—message-queue worker, article scraping, and chunked Gemini structured extraction—as soon as a blog can be logged.
   PRD ref: `prd.md > The Core Journey` (steps 3-5), `prd.md > 2. Asynchronous Scraping & Chunked Card Generation`, `prd.md > States and Boundaries`
@@ -61,7 +61,7 @@ Build mode: learn
 
 ## Hands-on Checkpoints
 
-- [ ] Early usable behavior explored — after Slice 2 (calendar blog logging + message-queue scraping and chunked Gemini flashcard generation in the accordion)
+- [x] Early usable behavior explored — after Slice 2 (calendar blog logging + message-queue scraping and chunked Gemini flashcard generation in the accordion)
 - [ ] Final kick-the-tires exploration and feedback completed
 
 ## Final Review

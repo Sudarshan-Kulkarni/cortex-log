@@ -4,12 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.database import init_db
-from app.routers import calendar
+from app.routers import calendar, flashcards
+from app.worker import start_worker_and_enqueue_pending
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    start_worker_and_enqueue_pending()
     yield
 
 
@@ -29,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(calendar.router)
+app.include_router(flashcards.router)
 
 
 @app.get("/api/health")

@@ -14,6 +14,15 @@ class LogBlogRequest(BaseModel):
     )
 
 
+class SubmitRawTextRequest(BaseModel):
+    raw_text: str = Field(
+        min_length=20, description="Pasted article text for scraping fallback"
+    )
+    title: str | None = Field(
+        default=None, description="Optional updated title for the blog"
+    )
+
+
 class LoggedBlogEntry(BaseModel):
     user_blog_id: int
     blog_id: int
@@ -39,3 +48,28 @@ class CalendarMonthResponse(BaseModel):
     streak_days: int
     total_logged_blogs: int
     days: dict[str, DayCalendarStatus]
+
+
+class FlashcardItemResponse(BaseModel):
+    card_id: int = Field(description="UserFlashcard ID used for curation actions")
+    canonical_flashcard_id: int | None = None
+    blog_id: int
+    chunk_index: int = 0
+    question: str
+    options: list[str]
+    answer: str
+    status: Literal["candidate", "dismissed", "queued_for_anki", "synced_to_anki"] | str
+    is_custom: bool = False
+    is_edited: bool = False
+
+
+class LoggedBlogAccordionResponse(BaseModel):
+    blog_id: int
+    title: str
+    canonical_url: str | None
+    logged_date: str
+    all_logged_dates: list[str]
+    status: Literal["processing", "ready", "scrape_failed"] | str
+    error_message: str | None = None
+    summary: str | None = None
+    flashcards: list[FlashcardItemResponse] = []
