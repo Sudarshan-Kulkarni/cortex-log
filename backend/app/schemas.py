@@ -63,6 +63,25 @@ class FlashcardItemResponse(BaseModel):
     is_edited: bool = False
 
 
+class UpdateFlashcardRequest(BaseModel):
+    question: str | None = Field(default=None, description="Edited question text")
+    options: list[str] | None = Field(
+        default=None, description="Edited multiple-choice options"
+    )
+    answer: str | None = Field(
+        default=None, description="Edited answer and explanation"
+    )
+
+
+class CreateCustomFlashcardRequest(BaseModel):
+    question: str = Field(min_length=3, description="Custom flashcard question")
+    options: list[str] = Field(
+        default_factory=list,
+        description="Optional multiple-choice options (can be empty for open Q&A)",
+    )
+    answer: str = Field(min_length=1, description="Custom flashcard answer")
+
+
 class LoggedBlogAccordionResponse(BaseModel):
     blog_id: int
     title: str

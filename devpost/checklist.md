@@ -29,7 +29,7 @@ Build mode: learn
   Learner check: Log a technical blog URL on the Calendar tab, switch to the Flashcards tab to watch its accordion badge update from `Processing` to `Ready`, expand it to read the summary and 2-column multiple-choice flashcards, and test pasting raw text on a failed scrape.
   Commit: `Add message-queue blog scraper, chunked Gemini card generator, and accordion view`
 
-- [ ] **3. Curate flashcards per user with inline editing, custom cards, and dismissal (`✕`)**
+- [x] **3. Curate flashcards per user with inline editing, custom cards, and dismissal (`✕`)**
   Becomes usable: Inside any expanded blog accordion on the Flashcards tab, you can edit a flashcard's question, multiple-choice options, or answer inline, add a new card with "+ Add Custom Card", or click `✕` to dismiss unwanted cards—saving all changes to your per-user state (`user_flashcards`) without altering the canonical `flashcards` rows for other users.
   Why now: Completes per-user card curation before wiring Anki delivery so that any edits or custom cards you create are the exact payloads sent when you approve a card.
   PRD ref: `prd.md > The Core Journey` (step 6), `prd.md > 3. Per-User Flashcard Curation, Editing, and Custom Cards`

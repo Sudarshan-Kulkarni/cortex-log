@@ -61,6 +61,18 @@ export interface LoggedBlogAccordion {
   flashcards: FlashcardItem[];
 }
 
+export interface UpdateFlashcardPayload {
+  question?: string;
+  options?: string[];
+  answer?: string;
+}
+
+export interface CreateCustomFlashcardPayload {
+  question: string;
+  options: string[];
+  answer: string;
+}
+
 export function getLocalTodayIso(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -136,6 +148,67 @@ export async function submitBlogRawText(
   });
   if (!res.ok) {
     let message = `Failed to submit raw text (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.detail) message = errData.detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function updateFlashcard(
+  cardId: number,
+  payload: UpdateFlashcardPayload
+): Promise<FlashcardItem> {
+  const res = await fetch(`${API_BASE_URL}/api/flashcards/${cardId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let message = `Failed to update flashcard (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.detail) message = errData.detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function createCustomFlashcard(
+  blogId: number,
+  payload: CreateCustomFlashcardPayload
+): Promise<FlashcardItem> {
+  const res = await fetch(`${API_BASE_URL}/api/blogs/${blogId}/custom-card`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let message = `Failed to create custom card (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.detail) message = errData.detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function dismissFlashcard(cardId: number): Promise<FlashcardItem> {
+  const res = await fetch(`${API_BASE_URL}/api/flashcards/${cardId}/dismiss`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    let message = `Failed to dismiss flashcard (${res.status})`;
     try {
       const errData = await res.json();
       if (errData.detail) message = errData.detail;
