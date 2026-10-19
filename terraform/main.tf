@@ -118,7 +118,13 @@ resource "google_project_iam_member" "cloudbuild_log_writer" {
 
 resource "null_resource" "build_and_push_images" {
   triggers = {
-    backend_dockerfile  = filesha256("${path.module}/../backend/Dockerfile")
+    backend_dockerfile = filesha256("${path.module}/../backend/Dockerfile")
+    backend_src_hash = sha256(join("", [
+      filesha256("${path.module}/../backend/app/main.py"),
+      filesha256("${path.module}/../backend/app/routers/calendar.py"),
+      filesha256("${path.module}/../backend/app/routers/flashcards.py"),
+      filesha256("${path.module}/../backend/app/routers/anki.py"),
+    ]))
     frontend_dockerfile = filesha256("${path.module}/../frontend/Dockerfile")
     frontend_src_hash = sha256(join("", [
       filesha256("${path.module}/../frontend/src/app/layout.tsx"),
@@ -132,14 +138,10 @@ resource "null_resource" "build_and_push_images" {
   provisioner "local-exec" {
     command = <<-EOT
       export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-      if ! gcloud artifacts docker images describe "${local.backend_image_uri}" --project "${var.gcp_project_id}" >/dev/null 2>&1; then
-        gcloud builds submit "${path.module}/../backend" \
-          --tag "${local.backend_image_uri}" \
-          --project "${var.gcp_project_id}" \
-          --quiet
-      else
-        echo "Backend image ${local.backend_image_uri} already exists in Artifact Registry; skipping rebuild."
-      fi
+      gcloud builds submit "${path.module}/../backend" \
+        --tag "${local.backend_image_uri}" \
+        --project "${var.gcp_project_id}" \
+        --quiet
       gcloud builds submit "${path.module}/../frontend" \
         --tag "${local.frontend_image_uri}" \
         --project "${var.gcp_project_id}" \
@@ -243,6 +245,10 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "CORS_ORIGINS"
         value = "*"
+      }
+      env {
+        name  = "IMAGE_REVISION_HASH"
+        value = null_resource.build_and_push_images.triggers["backend_src_hash"]
       }
     }
   }

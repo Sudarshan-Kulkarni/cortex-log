@@ -112,14 +112,19 @@ export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) 
     setSubmitFeedback(null);
   };
 
+  const isCurrentOrFutureMonth = currentMonth >= todayIso.slice(0, 7);
+
   const handleNextMonth = () => {
+    if (isCurrentOrFutureMonth) return;
     const nextDate = new Date(year, monthIndex + 1, 1);
     const nextMonthStr = formatMonthIso(
       nextDate.getFullYear(),
       nextDate.getMonth()
     );
     setCurrentMonth(nextMonthStr);
-    setSelectedDate(`${nextMonthStr}-01`);
+    setSelectedDate(
+      nextMonthStr === todayIso.slice(0, 7) ? todayIso : `${nextMonthStr}-01`
+    );
     setSubmitFeedback(null);
   };
 
@@ -266,7 +271,8 @@ export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) 
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="blueprint-btn-secondary px-2 py-1.5"
+                disabled={isCurrentOrFutureMonth}
+                className="blueprint-btn-secondary px-2 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                 aria-label="Next Month"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -332,19 +338,24 @@ export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) 
             const blogsForDay = dayStatus?.blogs ?? [];
             const isSelected = selectedDate === dateStr;
             const isToday = dateStr === todayIso;
+            const isFuture = dateStr > todayIso;
 
             return (
               <button
                 key={dateStr}
                 type="button"
+                disabled={isFuture}
                 onClick={() => {
+                  if (isFuture) return;
                   setSelectedDate(dateStr);
                   setSubmitFeedback(null);
                 }}
                 data-testid={`calendar-day-${dateStr}`}
                 data-indicator={indicator}
                 className={`h-24 sm:h-28 p-2 text-left border-r border-b border-ink flex flex-col justify-between transition-colors relative group ${
-                  isSelected
+                  isFuture
+                    ? "bg-manila/40 opacity-45 cursor-not-allowed"
+                    : isSelected
                     ? "bg-manila-muted ring-2 ring-inset ring-ink"
                     : "bg-manila-card hover:bg-manila"
                 }`}
@@ -353,7 +364,9 @@ export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) 
                 <div className="flex items-center justify-between w-full">
                   <span
                     className={`font-mono text-xs sm:text-sm font-bold ${
-                      isToday
+                      isFuture
+                        ? "text-ink-muted"
+                        : isToday
                         ? "underline decoration-2 underline-offset-4"
                         : "text-ink"
                     }`}

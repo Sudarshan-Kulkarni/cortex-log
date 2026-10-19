@@ -66,7 +66,8 @@ Build mode: learn
 
 ## Final Review
 
-- [ ] Remove internal architecture jargon from the top app subtitle (`page.tsx`) and Flashcards tab header (`FlashcardsTab.tsx`)
+- [x] Remove internal architecture jargon from the top app subtitle (`page.tsx`) and Flashcards tab header (`FlashcardsTab.tsx`)
+- [ ] Grey out and disable future days on the monthly calendar (`CalendarTab.tsx`) and order logged blogs on the Flashcards tab by most recently logged time descending (`flashcards.py`)
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map

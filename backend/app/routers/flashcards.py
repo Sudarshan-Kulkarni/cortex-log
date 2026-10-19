@@ -233,7 +233,7 @@ def get_logged_blogs_with_flashcards(
         select(UserBlog, Blog)
         .join(Blog, UserBlog.blog_id == Blog.id)
         .where(UserBlog.user_id == DEFAULT_USER_ID)
-        .order_by(UserBlog.logged_date.desc(), UserBlog.id.desc())
+        .order_by(UserBlog.created_at.desc(), UserBlog.id.desc())
     ).all()
 
     grouped: dict[int, tuple[Blog, list[str]]] = {}
