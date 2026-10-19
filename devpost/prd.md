@@ -118,6 +118,7 @@ Source: `scope.md > Inspiration & Identity`
 - **PDF Book & Paper Upload:** Deferred until after the URL and raw-text pipeline is proven.
 
 ## Possible Later Enhancements
+- **User Authentication & Login UI (Scheduled for Evening):** Add user signup/login (JWT / session auth), password hashing, and token-based authentication for the custom Anki add-on to activate the existing multi-user database schema (`users.id`).
 - **Per-User Duplicate Log Prevention / Warning:** Detect when the same user attempts to log a blog URL they already logged on an earlier date and warn or prevent duplicate `user_blogs` entries across dates.
 - **Custom Anki Deck & Tag Selector per Blog:** Let users pick different Anki sub-decks (e.g., `Cortex Log::Distributed Systems`) when approving cards.
 - **Highlight / Focus Hint on Log:** Optional field when logging a blog to tell the LLM which section or concept you care about most.
