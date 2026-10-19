@@ -49,7 +49,7 @@ Build mode: learn
   Learner check: Click `✓` on one or more flashcards to queue them for Anki, install the add-on via `./anki_addon/cortex_log_sync/install_addon.sh`, open Anki Desktop (or trigger `Tools -> Sync Cortex Log Cards`), and confirm the cards land in your `"Cortex Log"` Anki deck and update to `Synced to Anki` in the web app.
   Commit: `Add Anki delivery queue endpoints and custom Anki sync add-on`
 
-- [ ] **5. Provision and deploy the full stack end-to-end with Terraform and Docker**
+- [x] **5. Provision and deploy the full stack end-to-end with Terraform and Docker**
   Becomes usable: A complete Terraform configuration (`terraform/`) and Docker container setup (`backend/Dockerfile`, `frontend/Dockerfile`) that provisions and tears down the entire stack—Neon Postgres database, GCP Pub/Sub topics and subscriptions, Service Account/IAM bindings, Artifact Registry, and Cloud Run services for both FastAPI and Next.js—via `terraform apply` and `terraform destroy`.
   Why now: Packages the verified application and all cloud resources into a single reproducible Infrastructure-as-Code workflow once the full product loop is working.
   PRD ref: `prd.md > What We're Building`

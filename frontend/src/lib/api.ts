@@ -1,6 +1,14 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:8010";
+function getApiBase(): string {
+  if (typeof window !== "undefined") {
+    const winUrl = (window as unknown as { __CORTEX_API_URL__?: string })
+      .__CORTEX_API_URL__;
+    if (winUrl) return winUrl.replace(/\/$/, "");
+  }
+  return (
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+    "http://localhost:8010"
+  );
+}
 
 export interface LoggedBlogEntry {
   user_blog_id: number;
@@ -93,7 +101,7 @@ export async function fetchCalendarMonth(
 ): Promise<CalendarMonthResponse> {
   const todayParam = today || getLocalTodayIso();
   const res = await fetch(
-    `${API_BASE_URL}/api/calendar?month=${encodeURIComponent(
+    `${getApiBase()}/api/calendar?month=${encodeURIComponent(
       month
     )}&today=${encodeURIComponent(todayParam)}`,
     { cache: "no-store" }
@@ -108,7 +116,7 @@ export async function fetchCalendarMonth(
 export async function logBlogEntry(
   payload: LogBlogPayload
 ): Promise<LoggedBlogEntry> {
-  const res = await fetch(`${API_BASE_URL}/api/blogs/log`, {
+  const res = await fetch(`${getApiBase()}/api/blogs/log`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -129,7 +137,7 @@ export async function logBlogEntry(
 export async function fetchLoggedBlogsWithFlashcards(): Promise<
   LoggedBlogAccordion[]
 > {
-  const res = await fetch(`${API_BASE_URL}/api/blogs/logged`, {
+  const res = await fetch(`${getApiBase()}/api/blogs/logged`, {
     cache: "no-store",
   });
   if (!res.ok) {
@@ -144,7 +152,7 @@ export async function submitBlogRawText(
   rawText: string,
   title?: string
 ): Promise<LoggedBlogEntry> {
-  const res = await fetch(`${API_BASE_URL}/api/blogs/${blogId}/raw-text`, {
+  const res = await fetch(`${getApiBase()}/api/blogs/${blogId}/raw-text`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -169,7 +177,7 @@ export async function updateFlashcard(
   cardId: number,
   payload: UpdateFlashcardPayload
 ): Promise<FlashcardItem> {
-  const res = await fetch(`${API_BASE_URL}/api/flashcards/${cardId}`, {
+  const res = await fetch(`${getApiBase()}/api/flashcards/${cardId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -191,7 +199,7 @@ export async function createCustomFlashcard(
   blogId: number,
   payload: CreateCustomFlashcardPayload
 ): Promise<FlashcardItem> {
-  const res = await fetch(`${API_BASE_URL}/api/blogs/${blogId}/custom-card`, {
+  const res = await fetch(`${getApiBase()}/api/blogs/${blogId}/custom-card`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -210,7 +218,7 @@ export async function createCustomFlashcard(
 }
 
 export async function dismissFlashcard(cardId: number): Promise<FlashcardItem> {
-  const res = await fetch(`${API_BASE_URL}/api/flashcards/${cardId}/dismiss`, {
+  const res = await fetch(`${getApiBase()}/api/flashcards/${cardId}/dismiss`, {
     method: "POST",
   });
   if (!res.ok) {
@@ -227,7 +235,7 @@ export async function dismissFlashcard(cardId: number): Promise<FlashcardItem> {
 }
 
 export async function approveFlashcard(cardId: number): Promise<FlashcardItem> {
-  const res = await fetch(`${API_BASE_URL}/api/flashcards/${cardId}/approve`, {
+  const res = await fetch(`${getApiBase()}/api/flashcards/${cardId}/approve`, {
     method: "POST",
   });
   if (!res.ok) {
@@ -244,7 +252,7 @@ export async function approveFlashcard(cardId: number): Promise<FlashcardItem> {
 }
 
 export async function fetchAnkiQueueStatus(): Promise<AnkiQueueStatus> {
-  const res = await fetch(`${API_BASE_URL}/api/anki/status`, {
+  const res = await fetch(`${getApiBase()}/api/anki/status`, {
     cache: "no-store",
   });
   if (!res.ok) {
