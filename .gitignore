@@ -31,6 +31,14 @@ node_modules/
 .next/
 out/
 dist/
+next-env.d.ts
+*.tsbuildinfo
+
+# Local agent/skill folders
+.agents/
+.claude/
+agent/
+skills-lock.json
 
 # macOS
 .DS_Store

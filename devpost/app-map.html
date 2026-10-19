@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cortex Log — App Map &amp; Architecture Reference</title>
+  <style>
+    :root {
+      --bg-manila: #F3E9D2;
+      --bg-card: #FAF5E8;
+      --bg-muted: #E6D8B8;
+      --ink: #1C1B18;
+      --ink-muted: #57534E;
+      --green: #16A34A;
+      --yellow: #EAB308;
+      --blue: #2563EB;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 2rem 1.25rem 4rem;
+      background-color: var(--bg-manila);
+      background-image: radial-gradient(rgba(28, 27, 24, 0.12) 1px, transparent 1px);
+      background-size: 20px 20px;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.55;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header, section {
+      background: var(--bg-card);
+      border: 1.5px solid var(--ink);
+      box-shadow: 3px 3px 0px var(--ink);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .stamp {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--bg-muted);
+      border: 1px solid var(--ink);
+      padding: 0.2rem 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    h1, h2, h3 {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      margin-top: 0;
+      color: var(--ink);
+    }
+    h1 {
+      font-size: 1.65rem;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.15rem;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+    }
+    code {
+      background: var(--bg-muted);
+      padding: 0.1rem 0.35rem;
+      border: 1px solid rgba(28, 27, 24, 0.3);
+    }
+    pre {
+      background: var(--ink);
+      color: var(--bg-card);
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--ink);
+      margin: 0.5rem 0 1rem;
+    }
+    pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .box {
+      background: var(--bg-manila);
+      border: 1px solid var(--ink);
+      padding: 1rem;
+    }
+    .stop-card {
+      background: var(--bg-manila);
+      border: 1px solid var(--ink);
+      padding: 1rem;
+      margin-bottom: 0.85rem;
+    }
+    .stop-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      font-size: 0.8rem;
+      background: var(--ink);
+      color: var(--bg-card);
+      padding: 0.15rem 0.45rem;
+      margin-right: 0.5rem;
+    }
+    details {
+      background: var(--bg-manila);
+      border: 1px solid var(--ink);
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.65rem;
+    }
+    summary {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    ul {
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+    }
+    li {
+      margin-bottom: 0.4rem;
+    }
+    .diagram-wrap {
+      overflow-x: auto;
+      padding: 0.5rem 0;
+    }
+    .muted {
+      color: var(--ink-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="stamp">[CORTEX LOG // APP MAP &amp; REFERENCE]</div>
+      <h1>Cortex Log — Technical Reading Tracker &amp; Anki Companion</h1>
+      <p class="muted">
+        Snapshot generated from finished proof-of-concept source code (post-Final Review commit <code>2aca23e</code>). Note: this file is a static snapshot of the repository structure and can drift as the codebase evolves.
+      </p>
+      <p>
+        <strong>What it does:</strong> Cortex Log lets you log technical engineering blogs on a monthly reading calendar (turning today's yellow indicator dot green), dispatches logged articles over a message queue (<strong>GCP Pub/Sub</strong>) to scrape and chunk the text into detail-focused multiple-choice flashcards with <strong>Gemini (<code>gemini-2.5-flash</code>)</strong>, supports per-user card editing and curation in <strong>Neon PostgreSQL</strong>, and syncs approved cards into <strong>Anki Desktop</strong> through a lightweight outbound Anki 2.1+ add-on.
+      </p>
+    </header>
+
+    <section>
+      <h2>1. Main Pieces at a Glance</h2>
+      <div class="grid-2">
+        <div class="box">
+          <h3>Frontend (<code>frontend/</code>)</h3>
+          <p class="muted">Next.js 15 App Router + Tailwind CSS in the Techy Manila Blueprint theme (<code>#F3E9D2</code>).</p>
+          <ul>
+            <li><code>src/app/page.tsx</code> — Top blueprint header &amp; two-tab switcher (Calendar / Flashcards).</li>
+            <li><code>src/components/CalendarTab.tsx</code> — Monthly 7-column grid, green/yellow status dots, future-day lock, and blog logging drawer.</li>
+            <li><code>src/components/FlashcardsTab.tsx</code> — Expandable blog accordions, raw-text fallback form, 2-column flashcard grid, inline editor, custom card creator, and Anki approval controls.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>Backend &amp; Worker (<code>backend/</code>)</h3>
+          <p class="muted">FastAPI + SQLAlchemy 2.0 + GCP Pub/Sub + Google GenAI SDK.</p>
+          <ul>
+            <li><code>app/routers/calendar.py</code> — <code>GET /api/calendar</code> and deduplicated <code>POST /api/blogs/log</code>.</li>
+            <li><code>app/services/pubsub.py</code> &amp; <code>app/worker.py</code> — Pub/Sub publisher/subscriber for <code>blog-ingestion</code> and <code>anki-delivery</code>.</li>
+            <li><code>app/services/scraper.py</code> &amp; <code>app/services/llm.py</code> — Article extraction (<code>trafilatura</code>) and ~900-word chunked Gemini flashcard generation.</li>
+            <li><code>app/routers/flashcards.py</code> &amp; <code>app/routers/anki.py</code> — Per-user card overrides and Anki pull/ack queue endpoints.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>Anki Desktop Add-on (<code>anki_addon/</code>)</h3>
+          <p class="muted">Outbound pull-and-ack plugin inside Anki 2.1+ (<code>addons21/cortex_log_sync</code>).</p>
+          <ul>
+            <li><code>cortex_log_sync/__init__.py</code> — Hooks <code>aqt.gui_hooks.profile_did_open</code> and <code>Tools -&gt; Sync Cortex Log Cards</code>.</li>
+            <li><code>cortex_log_sync/config.json</code> — Points <code>backend_url</code> to local or Cloud Run backend.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>Cloud IaC (<code>terraform/</code>)</h3>
+          <p class="muted">End-to-end multi-provider Terraform (<code>hashicorp/google</code> + <code>kislerdm/neon</code>).</p>
+          <ul>
+            <li><code>main.tf</code> — Provisions Neon Serverless Postgres, GCP Pub/Sub topics/subscriptions, Artifact Registry, Cloud Build image push, and Cloud Run v2 services.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. End-to-End Flow Diagram: Approving &amp; Syncing a Flashcard to Anki</h2>
+      <p class="muted">How clicking <strong>✓ Approve</strong> in the browser travels through FastAPI, Neon Postgres, and GCP Pub/Sub into your local Anki Desktop collection:</p>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 880 175" width="100%" height="auto" role="img" aria-label="Architecture flow diagram from Browser Approve click to FastAPI, Postgres and GCP Pub/Sub, to Anki Desktop add-on">
+          <rect x="10" y="25" width="180" height="115" fill="#FAF5E8" stroke="#1C1B18" stroke-width="2" />
+          <text x="22" y="50" font-family="monospace" font-size="12" font-weight="bold" fill="#1C1B18">1. Browser UI</text>
+          <text x="22" y="72" font-family="monospace" font-size="11" fill="#57534E">FlashcardsTab.tsx</text>
+          <text x="22" y="92" font-family="sans-serif" font-size="11" fill="#1C1B18">Click "✓ Approve"</text>
+          <text x="22" y="112" font-family="monospace" font-size="10" fill="#2563EB">POST /flashcards/{id}/approve</text>
+
+          <line x1="190" y1="82" x2="235" y2="82" stroke="#1C1B18" stroke-width="2" />
+          <polygon points="235,77 245,82 235,87" fill="#1C1B18" />
+
+          <rect x="245" y="25" width="200" height="115" fill="#FAF5E8" stroke="#1C1B18" stroke-width="2" />
+          <text x="257" y="50" font-family="monospace" font-size="12" font-weight="bold" fill="#1C1B18">2. FastAPI Backend</text>
+          <text x="257" y="72" font-family="monospace" font-size="11" fill="#57534E">routers/anki.py</text>
+          <text x="257" y="92" font-family="sans-serif" font-size="11" fill="#1C1B18">Formats HTML card &amp;</text>
+          <text x="257" y="110" font-family="sans-serif" font-size="11" fill="#1C1B18">marks queued_for_anki</text>
+
+          <line x1="445" y1="82" x2="490" y2="82" stroke="#1C1B18" stroke-width="2" />
+          <polygon points="490,77 500,82 490,87" fill="#1C1B18" />
+
+          <rect x="500" y="25" width="165" height="115" fill="#E6D8B8" stroke="#1C1B18" stroke-width="2" />
+          <text x="512" y="50" font-family="monospace" font-size="12" font-weight="bold" fill="#1C1B18">3. Cloud Queue &amp; DB</text>
+          <text x="512" y="74" font-family="monospace" font-size="11" fill="#1C1B18">• Neon PostgreSQL</text>
+          <text x="512" y="94" font-family="monospace" font-size="11" fill="#1C1B18">• GCP Pub/Sub</text>
+          <text x="520" y="112" font-family="monospace" font-size="10" fill="#57534E">(anki-delivery-sub)</text>
+
+          <line x1="665" y1="82" x2="705" y2="82" stroke="#1C1B18" stroke-width="2" />
+          <polygon points="705,77 715,82 705,87" fill="#1C1B18" />
+
+          <rect x="715" y="25" width="155" height="115" fill="#FAF5E8" stroke="#1C1B18" stroke-width="2" />
+          <text x="727" y="50" font-family="monospace" font-size="12" font-weight="bold" fill="#1C1B18">4. Anki Add-on</text>
+          <text x="727" y="72" font-family="monospace" font-size="10" fill="#57534E">cortex_log_sync</text>
+          <text x="727" y="92" font-family="monospace" font-size="10" fill="#16A34A">POST /api/anki/pull</text>
+          <text x="727" y="108" font-family="sans-serif" font-size="11" fill="#1C1B18">Adds to "Cortex Log"</text>
+          <text x="727" y="124" font-family="monospace" font-size="10" fill="#16A34A">POST /api/anki/ack</text>
+        </svg>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Code Route (Reference Route: 3 Stops)</h2>
+      <p class="muted">Follow a single action—approving a flashcard and syncing it into Anki Desktop—across 3 files in your editor:</p>
+
+      <div class="stop-card">
+        <span class="stop-num">STOP 1</span>
+        <strong>Browser Trigger &amp; Optimistic Badge Update</strong> — <code>frontend/src/components/FlashcardsTab.tsx</code> (anchor: <code>handleApproveCard</code>)
+        <p class="muted">
+          When you click <strong>✓ Approve</strong> on a card, <code>handleApproveCard</code> calls <code>approveFlashcard(card.card_id)</code> in <code>frontend/src/lib/api.ts</code>, updates that card's badge in React state to <code>QUEUED FOR ANKI</code>, and refreshes the top-bar queue counter.
+        </p>
+      </div>
+
+      <div class="stop-card">
+        <span class="stop-num">STOP 2</span>
+        <strong>Pub/Sub Publish, Pull &amp; Acknowledge Endpoints</strong> — <code>backend/app/routers/anki.py</code> (anchors: <code>approve_flashcard_for_anki</code>, <code>pull_queued_anki_cards</code>, <code>acknowledge_anki_cards</code>)
+        <p class="muted">
+          <code>approve_flashcard_for_anki</code> resolves your per-user row in <code>user_flashcards</code>, builds the HTML front/back with <code>_build_anki_card_html</code>, and publishes the payload to the GCP Pub/Sub <code>anki-delivery</code> topic via <code>publish_anki_delivery</code> in <code>backend/app/services/pubsub.py</code>. When Anki Desktop calls <code>POST /api/anki/pull</code> and <code>POST /api/anki/ack</code>, the backend pulls waiting Pub/Sub <code>ack_ids</code>, acknowledges them, and marks the rows <code>synced_to_anki</code>.
+        </p>
+      </div>
+
+      <div class="stop-card">
+        <span class="stop-num">STOP 3</span>
+        <strong>Anki Desktop Startup Hook &amp; Note Insertion</strong> — <code>anki_addon/cortex_log_sync/__init__.py</code> (anchors: <code>_register_anki_hooks</code>, <code>sync_cortex_log_cards</code>)
+        <p class="muted">
+          Inside Anki Desktop, <code>_register_anki_hooks</code> attaches <code>sync_cortex_log_cards</code> to <code>gui_hooks.profile_did_open</code> (and adds <code>Tools -&gt; Sync Cortex Log Cards</code>). It makes an outbound HTTP request to your Cloud Run backend, creates/opens the <code>"Cortex Log"</code> deck with <code>mw.col.decks.id(deck_name)</code>, inserts each note via <code>mw.col.add_note(note, deck_id)</code>, and ACKs the synced IDs.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. "To Change This, Start Here" Pointers</h2>
+      <details open>
+        <summary>Change how Gemini chunks articles or writes multiple-choice distractors</summary>
+        <p>
+          Open <code>backend/app/services/llm.py</code> and look at <code>chunk_text_by_words</code> (currently <code>target_words = 900</code>, <code>overlap_words = 100</code>) and <code>SYSTEM_PROMPT</code> inside <code>generate_summary_and_flashcards</code>.
+        </p>
+      </details>
+      <details>
+        <summary>Adjust calendar future-day rules or Flashcards page sort order (Final Review edits)</summary>
+        <p>
+          Future calendar cells are disabled via <code>const isFuture = dateStr &gt; todayIso</code> in <code>frontend/src/components/CalendarTab.tsx</code>. The Flashcards page sort order is controlled in <code>backend/app/routers/flashcards.py</code> inside <code>get_logged_blogs_with_flashcards</code> (<code>.order_by(UserBlog.created_at.desc(), UserBlog.id.desc())</code>).
+        </p>
+      </details>
+      <details>
+        <summary>Customize the HTML styling of cards inside Anki Desktop</summary>
+        <p>
+          Open <code>backend/app/routers/anki.py</code> and edit <code>_build_anki_card_html</code>, which formats the <code>[CORTEX LOG // Title]</code> header, multiple-choice <code>&lt;ul&gt;</code> list, and source URL link on the card back.
+        </p>
+      </details>
+      <details>
+        <summary>Switch the Anki add-on between Cloud Run and local development</summary>
+        <p>
+          Edit <code>"backend_url"</code> in <code>anki_addon/cortex_log_sync/config.json</code> and re-run <code>./anki_addon/cortex_log_sync/install_addon.sh</code>.
+        </p>
+      </details>
+    </section>
+
+    <section>
+      <h2>5. A Practice to Reuse</h2>
+      <p>
+        <strong>Separating build-time vs. runtime configuration in containerized web apps:</strong> During our Cloud Run deployment (Slice 5), the frontend initially threw <code>Failed to fetch</code> even though <code>NEXT_PUBLIC_API_URL</code> was set on the Cloud Run service. Inspecting the rendered HTML revealed that Next.js's compiler inlines <code>process.env.NEXT_PUBLIC_*</code> string literals at <code>docker build</code> time, baking in the <code>Dockerfile</code> default (<code>http://localhost:8010</code>).
+      </p>
+      <p>
+        <strong>The reusable pattern:</strong> In <code>frontend/src/app/layout.tsx</code> (marked <code>export const dynamic = "force-dynamic"</code>), we read a non-prefixed server environment variable at request time (<code>envMap["BACKEND_API_URL"]</code>) and inject it into <code>window.__CORTEX_API_URL__</code>, which <code>frontend/src/lib/api.ts</code> reads first via <code>getApiBase()</code>. On any future Next.js + Docker/Cloud Run/Kubernetes project, this lets you build the frontend image once in CI/Cloud Build and inject environment-specific backend URLs at container startup without rebuilding the image.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. How to Run, Deploy, or Tear Down</h2>
+      <h3>Local Development</h3>
+      <pre><code># Terminal 1 — FastAPI Backend &amp; Worker (port 8010)
+cd backend &amp;&amp; ./.venv/bin/uvicorn app.main:app --reload --port 8010
+
+# Terminal 2 — Next.js Frontend (port 3010)
+cd frontend &amp;&amp; npm run dev
+
+# Install/Update Anki Desktop Add-on
+./anki_addon/cortex_log_sync/install_addon.sh</code></pre>
+
+      <h3>Cloud Run + Neon + Pub/Sub via Terraform</h3>
+      <pre><code># Provision or update the full cloud stack
+cd terraform
+terraform init
+terraform apply
+
+# Tear down all cloud resources cleanly when finished
+terraform destroy</code></pre>
+    </section>
+  </div>
+</body>
+</html>
