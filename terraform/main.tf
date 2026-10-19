@@ -120,7 +120,13 @@ resource "null_resource" "build_and_push_images" {
   triggers = {
     backend_dockerfile  = filesha256("${path.module}/../backend/Dockerfile")
     frontend_dockerfile = filesha256("${path.module}/../frontend/Dockerfile")
-    repo_id             = google_artifact_registry_repository.docker_repo.id
+    frontend_src_hash = sha256(join("", [
+      filesha256("${path.module}/../frontend/src/app/layout.tsx"),
+      filesha256("${path.module}/../frontend/src/app/page.tsx"),
+      filesha256("${path.module}/../frontend/src/components/CalendarTab.tsx"),
+      filesha256("${path.module}/../frontend/src/components/FlashcardsTab.tsx"),
+    ]))
+    repo_id = google_artifact_registry_repository.docker_repo.id
   }
 
   provisioner "local-exec" {
@@ -290,7 +296,7 @@ resource "google_cloud_run_v2_service" "frontend" {
       }
       env {
         name  = "IMAGE_REVISION_HASH"
-        value = filesha256("${path.module}/../frontend/Dockerfile")
+        value = null_resource.build_and_push_images.triggers["frontend_src_hash"]
       }
     }
   }

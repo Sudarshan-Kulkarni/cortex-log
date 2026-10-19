@@ -66,6 +66,7 @@ Build mode: learn
 
 ## Final Review
 
+- [ ] Remove internal architecture jargon from the top app subtitle (`page.tsx`) and Flashcards tab header (`FlashcardsTab.tsx`)
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
@@ -83,3 +84,6 @@ Activity mode: [live app and editor, explicit static fallback, focused alternati
 ## Revisions
 
 - Changed default local dev ports to `http://localhost:3010` (frontend) and `http://localhost:8010` (backend) — local ports `3000` (`code-assist-mcp`) and `8000` were already occupied by existing processes on the machine.
+- Added `neon_org_id` variable and `history_retention_seconds = 21600` to `neon_project.cortex_log` in `terraform/main.tf` — Neon's API requires an explicit `org_id` for organization-scoped accounts and enforces a 6-hour (`21600s`) history retention ceiling on the Free Tier (vs. the provider's `86400s` default).
+- Added Cloud Build service account IAM bindings (`roles/storage.admin`, `roles/artifactregistry.writer`, `roles/logging.logWriter`), `backend/.gcloudignore`, and `frontend/.gcloudignore` — required so `gcloud builds submit` can read staging tarballs in newer GCP projects and skip uploading `.venv` and `node_modules`.
+- Added dynamic runtime lookup (`envMap["BACKEND_API_URL"]`) in `frontend/src/app/layout.tsx` (`window.__CORTEX_API_URL__`) — Next.js inlines `process.env.NEXT_PUBLIC_*` at Docker build time, so reading `BACKEND_API_URL` dynamically at request time allows the Cloud Run frontend container to use the Cloud Run backend URI without a two-pass image build.

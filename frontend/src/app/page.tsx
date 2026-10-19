@@ -29,7 +29,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="font-mono text-xs text-ink-muted">
-                Engineering Reading Tracker &amp; Chunked Flashcard Pipeline
+                Technical Reading Tracker &amp; Flashcard Companion
               </p>
             </div>
           </div>

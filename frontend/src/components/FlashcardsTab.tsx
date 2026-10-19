@@ -397,10 +397,10 @@ export default function FlashcardsTab({
       <div className="blueprint-card p-4 flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="font-mono text-xs uppercase tracking-widest text-ink-muted block">
-            Pub/Sub Extraction &amp; Anki Delivery Queue
+            Reading Archive
           </span>
           <h2 className="font-mono text-xl font-bold">
-            Logged Blogs &amp; Flashcard Accordions ({blogs.length})
+            Logged Blogs &amp; Flashcards ({blogs.length})
           </h2>
         </div>
 
