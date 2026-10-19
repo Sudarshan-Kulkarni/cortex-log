@@ -83,11 +83,15 @@ PRD ref: `prd.md > The Core Journey`
 
 ## Where It Runs and How Someone Tries It
 
+- **Sharing & Repository Links:**
+  - **GitHub Repository:** `https://github.com/Sudarshan-Kulkarni/cortex-log`
+  - **Live Cloud Run Frontend (Optional Deployment):** `https://cortex-log-frontend-nnbhmcr5fq-uc.a.run.app`
+  - **Live Cloud Run Backend API:** `https://cortex-log-backend-nnbhmcr5fq-uc.a.run.app`
 - **Runtime Environment (Local Dev & Cloud Deployed via Terraform):**
-  - **Backend (`backend/`):** Runs locally on `http://localhost:8000` during development, and deploys as a container image (`backend/Dockerfile`) to **Google Cloud Run** via Terraform.
-  - **Frontend (`frontend/`):** Runs locally on `http://localhost:3000` during development, and deploys as a container image (`frontend/Dockerfile`) to **Google Cloud Run** via Terraform.
+  - **Backend (`backend/`):** Runs locally on `http://localhost:8010` during development, and deploys as a container image (`backend/Dockerfile`) to **Google Cloud Run** via Terraform.
+  - **Frontend (`frontend/`):** Runs locally on `http://localhost:3010` during development, and deploys as a container image (`frontend/Dockerfile`) to **Google Cloud Run** via Terraform.
   - **Database & Queue:** Cloud-hosted **Neon Postgres** (`DATABASE_URL`) and **GCP Pub/Sub** (`blog-ingestion` and `anki-delivery` topics/subscriptions), provisioned via Terraform (`terraform/main.tf`).
-  - **Anki Add-on (`anki_addon/cortex_log_sync/`):** Installed into Anki Desktop's `addons21/` folder (`~/Library/Application Support/Anki2/addons21/cortex_log_sync` on macOS); `config.json` points to either `http://localhost:8000` or the Terraform-outputted Cloud Run backend URL.
+  - **Anki Add-on (`anki_addon/cortex_log_sync/`):** Installed into Anki Desktop's `addons21/` folder (`~/Library/Application Support/Anki2/addons21/cortex_log_sync` on macOS); `config.json` points to either `http://localhost:8010` or the Terraform-outputted Cloud Run backend URL.
 - **Required Environment Variables (`backend/.env` / `terraform/terraform.tfvars`):**
   - `DATABASE_URL` — Neon Postgres connection string (`postgresql+psycopg://...`, provisioned and output by Terraform)
   - `GEMINI_API_KEY` — Google Gemini API key
@@ -97,9 +101,9 @@ PRD ref: `prd.md > The Core Journey`
   - `PUBSUB_BLOG_TOPIC` / `PUBSUB_BLOG_SUB` — Topic & subscription names for blog ingestion
   - `PUBSUB_ANKI_TOPIC` / `PUBSUB_ANKI_SUB` — Topic & subscription names for Anki delivery
 - **How to Start Locally:**
-  1. Start Backend: `cd backend && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000`
+  1. Start Backend: `cd backend && source .venv/bin/activate && uvicorn app.main:app --reload --port 8010`
   2. Start Frontend: `cd frontend && npm run dev`
-  3. Open `http://localhost:3000` in browser to log a blog on the Calendar, curate generated flashcards in the Accordion, click `✓`, and open Anki Desktop to watch the cards sync into the `"Cortex Log"` deck.
+  3. Open `http://localhost:3010` in browser to log a blog on the Calendar, curate generated flashcards in the Accordion, click `✓`, and open Anki Desktop to watch the cards sync into the `"Cortex Log"` deck.
 - **How to Deploy & Destroy the Entire Stack with Terraform:**
   1. Deploy: `cd terraform && terraform init && terraform apply` (provisions Neon Postgres, GCP Pub/Sub topics/subscriptions, Service Account/IAM, Artifact Registry, and Cloud Run services for backend and frontend, outputting the live URLs and `.env` values).
   2. Destroy: `cd terraform && terraform destroy` (tears down all cloud instances, queues, and database resources cleanly).
