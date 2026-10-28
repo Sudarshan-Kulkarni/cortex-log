@@ -131,6 +131,7 @@ def get_calendar_month(
 @router.post("/blogs/log", response_model=LoggedBlogEntry)
 def log_blog(
     payload: LogBlogRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> LoggedBlogEntry:
     raw_url = (payload.url or "").strip()

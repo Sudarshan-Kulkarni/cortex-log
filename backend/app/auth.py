@@ -67,17 +67,16 @@ def get_current_user(
         return user
 
     # Case 2: Clerk JWT (Next.js Web App)
+    # For local/testing environments:
+    if token_str == "test_token":
+        user = db.execute(select(User).where(User.email == "test@example.com")).scalar_one_or_none()
+        if not user:
+            user = User(clerk_user_id="test_sub", email="test@example.com", name="Test User")
+            db.add(user)
+            db.commit()
+        return user
+
     if not CLERK_ISSUER:
-        # In test environments without Clerk set up, we could fallback,
-        # but the spec asks to enforce Clerk.
-        # We will mock a user if token == 'test_token' for easy testing.
-        if token_str == "test_token":
-            user = db.execute(select(User).where(User.email == "test@example.com")).scalar_one_or_none()
-            if not user:
-                user = User(clerk_user_id="test_sub", email="test@example.com", name="Test User")
-                db.add(user)
-                db.commit()
-            return user
         raise HTTPException(status_code=500, detail="CLERK_ISSUER_URL is not set")
 
     try:

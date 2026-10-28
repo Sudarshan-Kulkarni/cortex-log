@@ -36,7 +36,11 @@ export default function RootLayout({
     "";
   return (
     <ClerkProvider publishableKey={clerkPublishableKey}>
-      <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <html
+        lang="en"
+        suppressHydrationWarning
+        className={`${inter.variable} ${jetbrainsMono.variable}`}
+      >
         <head>
         {runtimeApiUrl ? (
           <script
@@ -48,7 +52,10 @@ export default function RootLayout({
           />
         ) : null}
         </head>
-        <body className="font-sans antialiased selection:bg-ink selection:text-manila-card">
+        <body
+          suppressHydrationWarning
+          className="font-sans antialiased selection:bg-ink selection:text-manila-card"
+        >
           {children}
         </body>
       </html>
