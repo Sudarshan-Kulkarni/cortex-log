@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import { Calendar, Layers, Terminal } from "lucide-react";
+import { Calendar, Layers, Terminal, Settings } from "lucide-react";
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import CalendarTab from "@/components/CalendarTab";
 import FlashcardsTab from "@/components/FlashcardsTab";
+import SettingsModal from "@/components/SettingsModal";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"calendar" | "flashcards">(
     "calendar"
   );
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -63,9 +66,34 @@ export default function HomePage() {
               <Layers className="w-3.5 h-3.5" />
               2. Flashcards
             </button>
+
+            <div className="flex items-center gap-4 ml-4 pl-4 border-l border-ink/30">
+              <SignedIn>
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(true)}
+                  className="p-2 border border-ink text-ink hover:bg-manila-muted transition-colors"
+                  title="Settings (Anki PAT)"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="blueprint-btn px-4 py-2 text-xs">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </SignedOut>
+            </div>
           </nav>
         </div>
       </header>
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">

@@ -1,10 +1,11 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import DEFAULT_USER_ID
+from app.auth import get_current_user
 from app.database import get_db
-from app.models import Blog, Flashcard, UserBlog, UserFlashcard
+from app.models import Blog, Flashcard, User, UserBlog, UserFlashcard
 from app.schemas import (
     CreateCustomFlashcardRequest,
     FlashcardItemResponse,
@@ -227,12 +228,13 @@ def _sync_and_serialize_flashcards_for_blog(
 
 @router.get("/blogs/logged", response_model=list[LoggedBlogAccordionResponse])
 def get_logged_blogs_with_flashcards(
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> list[LoggedBlogAccordionResponse]:
     rows = db.execute(
         select(UserBlog, Blog)
         .join(Blog, UserBlog.blog_id == Blog.id)
-        .where(UserBlog.user_id == DEFAULT_USER_ID)
+        .where(UserBlog.user_id == current_user.id)
         .order_by(UserBlog.created_at.desc(), UserBlog.id.desc())
     ).all()
 
@@ -248,7 +250,7 @@ def get_logged_blogs_with_flashcards(
     accordions: list[LoggedBlogAccordionResponse] = []
     for blog_id, (blog, logged_dates) in grouped.items():
         cards = (
-            _sync_and_serialize_flashcards_for_blog(db, DEFAULT_USER_ID, blog_id)
+            _sync_and_serialize_flashcards_for_blog(db, current_user.id, blog_id)
             if blog.status == "ready"
             else []
         )
@@ -273,9 +275,10 @@ def get_logged_blogs_with_flashcards(
 def update_user_flashcard(
     card_id: int,
     payload: UpdateFlashcardRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> FlashcardItemResponse:
-    uc = _resolve_user_flashcard(db, DEFAULT_USER_ID, card_id)
+    uc = _resolve_user_flashcard(db, current_user.id, card_id)
 
     if payload.question is not None:
         cleaned_q = payload.question.strip()
@@ -306,6 +309,7 @@ def update_user_flashcard(
 def create_custom_flashcard(
     blog_id: int,
     payload: CreateCustomFlashcardRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> FlashcardItemResponse:
     blog = db.execute(select(Blog).where(Blog.id == blog_id)).scalar_one_or_none()
@@ -315,7 +319,7 @@ def create_custom_flashcard(
     cleaned_options = [opt.strip() for opt in payload.options if opt.strip()]
 
     custom_uc = UserFlashcard(
-        user_id=DEFAULT_USER_ID,
+        user_id=current_user.id,
         blog_id=blog.id,
         canonical_flashcard_id=None,
         question_override=payload.question.strip(),
@@ -334,9 +338,10 @@ def create_custom_flashcard(
 )
 def dismiss_user_flashcard(
     card_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> FlashcardItemResponse:
-    uc = _resolve_user_flashcard(db, DEFAULT_USER_ID, card_id)
+    uc = _resolve_user_flashcard(db, current_user.id, card_id)
     uc.status = "dismissed"
     db.commit()
     db.refresh(uc)

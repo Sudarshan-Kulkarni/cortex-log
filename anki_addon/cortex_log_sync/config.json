@@ -1,6 +1,6 @@
 {
   "backend_url": "https://cortex-log-backend-nnbhmcr5fq-uc.a.run.app",
-  "user_id": 1,
+  "api_key": "",
   "deck_name": "Cortex Log",
   "auto_sync_on_startup": true
 }

@@ -25,7 +25,7 @@ def _load_addon_config() -> dict[str, Any]:
     """Load config from Anki's addonManager or fall back to local config.json."""
     defaults: dict[str, Any] = {
         "backend_url": "http://localhost:8010",
-        "user_id": 1,
+        "api_key": "",
         "deck_name": "Cortex Log",
         "auto_sync_on_startup": True,
     }
@@ -50,16 +50,20 @@ def _load_addon_config() -> dict[str, Any]:
     return defaults
 
 
-def _http_post_json(url: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _http_post_json(url: str, payload: dict[str, Any], api_key: str = "") -> dict[str, Any]:
     """Perform an outbound HTTP POST with JSON using Python's stdlib urllib."""
     body = json.dumps(payload).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
     req = urllib.request.Request(
         url,
         data=body,
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=20.0) as resp:
@@ -81,9 +85,18 @@ def sync_cortex_log_cards(manual: bool = False) -> None:
 
     backend_url = str(cfg.get("backend_url", "http://localhost:8010")).rstrip("/")
     default_deck_name = str(cfg.get("deck_name", "Cortex Log"))
+    api_key = str(cfg.get("api_key", ""))
 
     try:
-        pull_data = _http_post_json(f"{backend_url}/api/anki/pull", {})
+        pull_data = _http_post_json(f"{backend_url}/api/anki/pull", {}, api_key)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            if manual:
+                tooltip("Cortex Log sync failed: 401 Unauthorized. Check your API key in config.json.")
+            return
+        if manual:
+            tooltip(f"Cortex Log: HTTP error {exc.code}")
+        return
     except urllib.error.URLError as exc:
         if manual:
             tooltip(f"Cortex Log: Could not reach backend at {backend_url} ({exc.reason})")
@@ -147,6 +160,7 @@ def sync_cortex_log_cards(manual: bool = False) -> None:
                 "user_flashcard_ids": synced_card_ids,
                 "ack_ids": ack_ids,
             },
+            api_key
         )
     except Exception:
         pass

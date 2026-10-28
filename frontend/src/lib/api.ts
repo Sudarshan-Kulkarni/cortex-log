@@ -97,6 +97,7 @@ export function getLocalTodayIso(): string {
 
 export async function fetchCalendarMonth(
   month: string,
+  token: string,
   today?: string
 ): Promise<CalendarMonthResponse> {
   const todayParam = today || getLocalTodayIso();
@@ -104,7 +105,12 @@ export async function fetchCalendarMonth(
     `${getApiBase()}/api/calendar?month=${encodeURIComponent(
       month
     )}&today=${encodeURIComponent(todayParam)}`,
-    { cache: "no-store" }
+    {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
   );
   if (!res.ok) {
     const errText = await res.text();
@@ -114,11 +120,15 @@ export async function fetchCalendarMonth(
 }
 
 export async function logBlogEntry(
-  payload: LogBlogPayload
+  payload: LogBlogPayload,
+  token: string
 ): Promise<LoggedBlogEntry> {
   const res = await fetch(`${getApiBase()}/api/blogs/log`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -134,11 +144,14 @@ export async function logBlogEntry(
   return res.json();
 }
 
-export async function fetchLoggedBlogsWithFlashcards(): Promise<
-  LoggedBlogAccordion[]
-> {
+export async function fetchLoggedBlogsWithFlashcards(
+  token: string
+): Promise<LoggedBlogAccordion[]> {
   const res = await fetch(`${getApiBase()}/api/blogs/logged`, {
     cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   if (!res.ok) {
     const errText = await res.text();
@@ -150,11 +163,15 @@ export async function fetchLoggedBlogsWithFlashcards(): Promise<
 export async function submitBlogRawText(
   blogId: number,
   rawText: string,
+  token: string,
   title?: string
 ): Promise<LoggedBlogEntry> {
   const res = await fetch(`${getApiBase()}/api/blogs/${blogId}/raw-text`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({
       raw_text: rawText,
       title: title?.trim() || undefined,
@@ -175,11 +192,15 @@ export async function submitBlogRawText(
 
 export async function updateFlashcard(
   cardId: number,
-  payload: UpdateFlashcardPayload
+  payload: UpdateFlashcardPayload,
+  token: string
 ): Promise<FlashcardItem> {
   const res = await fetch(`${getApiBase()}/api/flashcards/${cardId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -197,11 +218,15 @@ export async function updateFlashcard(
 
 export async function createCustomFlashcard(
   blogId: number,
-  payload: CreateCustomFlashcardPayload
+  payload: CreateCustomFlashcardPayload,
+  token: string
 ): Promise<FlashcardItem> {
   const res = await fetch(`${getApiBase()}/api/blogs/${blogId}/custom-card`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -217,9 +242,15 @@ export async function createCustomFlashcard(
   return res.json();
 }
 
-export async function dismissFlashcard(cardId: number): Promise<FlashcardItem> {
+export async function dismissFlashcard(
+  cardId: number,
+  token: string
+): Promise<FlashcardItem> {
   const res = await fetch(`${getApiBase()}/api/flashcards/${cardId}/dismiss`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   if (!res.ok) {
     let message = `Failed to dismiss flashcard (${res.status})`;
@@ -234,9 +265,15 @@ export async function dismissFlashcard(cardId: number): Promise<FlashcardItem> {
   return res.json();
 }
 
-export async function approveFlashcard(cardId: number): Promise<FlashcardItem> {
+export async function approveFlashcard(
+  cardId: number,
+  token: string
+): Promise<FlashcardItem> {
   const res = await fetch(`${getApiBase()}/api/flashcards/${cardId}/approve`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   if (!res.ok) {
     let message = `Failed to approve flashcard for Anki (${res.status})`;
@@ -251,9 +288,14 @@ export async function approveFlashcard(cardId: number): Promise<FlashcardItem> {
   return res.json();
 }
 
-export async function fetchAnkiQueueStatus(): Promise<AnkiQueueStatus> {
+export async function fetchAnkiQueueStatus(
+  token: string
+): Promise<AnkiQueueStatus> {
   const res = await fetch(`${getApiBase()}/api/anki/status`, {
     cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to load Anki queue status (${res.status})`);

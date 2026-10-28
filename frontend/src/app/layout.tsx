@@ -20,6 +20,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+import { ClerkProvider } from "@clerk/nextjs";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,8 +31,9 @@ export default function RootLayout({
   const runtimeApiUrl =
     envMap["BACKEND_API_URL"] || envMap["NEXT_PUBLIC_API_URL"] || "";
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <head>
+    <ClerkProvider>
+      <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+        <head>
         {runtimeApiUrl ? (
           <script
             dangerouslySetInnerHTML={{
@@ -40,10 +43,11 @@ export default function RootLayout({
             }}
           />
         ) : null}
-      </head>
-      <body className="font-sans antialiased selection:bg-ink selection:text-manila-card">
-        {children}
-      </body>
-    </html>
+        </head>
+        <body className="font-sans antialiased selection:bg-ink selection:text-manila-card">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

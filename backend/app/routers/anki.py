@@ -1,11 +1,12 @@
 import html
+from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.config import DEFAULT_USER_ID
+from app.auth import get_current_user
 from app.database import get_db
-from app.models import Blog, Flashcard, UserFlashcard
+from app.models import Blog, Flashcard, User, UserFlashcard
 from app.routers.flashcards import (
     _resolve_user_flashcard,
     _serialize_single_user_flashcard,
@@ -74,6 +75,7 @@ def _build_anki_card_html(
 
 @router.get("/anki/status", response_model=AnkiQueueStatusResponse)
 def get_anki_queue_status(
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> AnkiQueueStatusResponse:
     queued_count = (
@@ -81,7 +83,7 @@ def get_anki_queue_status(
             select(func.count())
             .select_from(UserFlashcard)
             .where(
-                UserFlashcard.user_id == DEFAULT_USER_ID,
+                UserFlashcard.user_id == current_user.id,
                 UserFlashcard.status == "queued_for_anki",
             )
         )
@@ -92,7 +94,7 @@ def get_anki_queue_status(
             select(func.count())
             .select_from(UserFlashcard)
             .where(
-                UserFlashcard.user_id == DEFAULT_USER_ID,
+                UserFlashcard.user_id == current_user.id,
                 UserFlashcard.status == "synced_to_anki",
             )
         )
@@ -110,9 +112,10 @@ def get_anki_queue_status(
 )
 def approve_flashcard_for_anki(
     card_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> FlashcardItemResponse:
-    uc = _resolve_user_flashcard(db, DEFAULT_USER_ID, card_id)
+    uc = _resolve_user_flashcard(db, current_user.id, card_id)
     uc.status = "queued_for_anki"
     db.commit()
     db.refresh(uc)
@@ -152,6 +155,7 @@ def approve_flashcard_for_anki(
 
 @router.post("/anki/pull", response_model=AnkiPullResponse)
 def pull_queued_anki_cards(
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> AnkiPullResponse:
     queued_rows = (
@@ -159,7 +163,7 @@ def pull_queued_anki_cards(
             select(UserFlashcard, Blog)
             .join(Blog, UserFlashcard.blog_id == Blog.id)
             .where(
-                UserFlashcard.user_id == DEFAULT_USER_ID,
+                UserFlashcard.user_id == current_user.id,
                 UserFlashcard.status == "queued_for_anki",
             )
             .order_by(UserFlashcard.id.asc())
@@ -238,6 +242,7 @@ def pull_queued_anki_cards(
 @router.post("/anki/ack", response_model=AnkiAckResponse)
 def acknowledge_anki_cards(
     payload: AnkiAckRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> AnkiAckResponse:
     if payload.ack_ids:
@@ -248,7 +253,7 @@ def acknowledge_anki_cards(
         rows = (
             db.execute(
                 select(UserFlashcard).where(
-                    UserFlashcard.user_id == DEFAULT_USER_ID,
+                    UserFlashcard.user_id == current_user.id,
                     UserFlashcard.id.in_(payload.user_flashcard_ids),
                 )
             )

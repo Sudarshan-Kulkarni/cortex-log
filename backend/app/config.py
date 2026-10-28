@@ -47,4 +47,3 @@ CORS_ORIGINS: list[str] = list(
     )
 )
 
-DEFAULT_USER_ID: int = 1
