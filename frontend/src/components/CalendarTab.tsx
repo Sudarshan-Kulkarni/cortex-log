@@ -14,6 +14,7 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import {
   CalendarMonthResponse,
   fetchCalendarMonth,
@@ -53,6 +54,7 @@ function formatMonthIso(year: number, monthIndex: number): string {
 }
 
 export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) {
+  const { getToken } = useAuth();
   const todayIso = useMemo(() => getLocalTodayIso(), []);
   const initialMonth = useMemo(() => todayIso.slice(0, 7), [todayIso]);
 
@@ -80,7 +82,9 @@ export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) 
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchCalendarMonth(monthStr, todayIso);
+        const token = await getToken();
+        if (!token) return;
+        const data = await fetchCalendarMonth(monthStr, token, todayIso);
         setCalendarData(data);
       } catch (err) {
         setError(
@@ -148,12 +152,17 @@ export default function CalendarTab({ onSwitchToFlashcards }: CalendarTabProps) 
     setSubmitFeedback(null);
 
     try {
-      const logged: LoggedBlogEntry = await logBlogEntry({
-        logged_date: selectedDate,
-        url: urlInput.trim() || undefined,
-        raw_text: rawTextInput.trim() || undefined,
-        title: titleInput.trim() || undefined,
-      });
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      const logged: LoggedBlogEntry = await logBlogEntry(
+        {
+          logged_date: selectedDate,
+          url: urlInput.trim() || undefined,
+          raw_text: rawTextInput.trim() || undefined,
+          title: titleInput.trim() || undefined,
+        },
+        token
+      );
 
       // Optimistically update the selected day cell so its corner dot turns green immediately
       setCalendarData((prev) => {

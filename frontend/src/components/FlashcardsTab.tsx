@@ -23,6 +23,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import {
   AnkiQueueStatus,
   approveFlashcard,
@@ -49,6 +50,7 @@ interface CardDraft {
 export default function FlashcardsTab({
   onSwitchToCalendar,
 }: FlashcardsTabProps) {
+  const { getToken } = useAuth();
   const [blogs, setBlogs] = useState<LoggedBlogAccordion[]>([]);
   const [ankiStatus, setAnkiStatus] = useState<AnkiQueueStatus>({
     deck_name: "Cortex Log",
@@ -106,9 +108,11 @@ export default function FlashcardsTab({
   const loadBlogs = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
+      const token = await getToken();
+      if (!token) return;
       const [data, queueInfo] = await Promise.all([
-        fetchLoggedBlogsWithFlashcards(),
-        fetchAnkiQueueStatus().catch(() => ({
+        fetchLoggedBlogsWithFlashcards(token),
+        fetchAnkiQueueStatus(token).catch(() => ({
           deck_name: "Cortex Log",
           queued_count: 0,
           synced_count: 0,
@@ -181,11 +185,17 @@ export default function FlashcardsTab({
     setSavingCardId(card.card_id);
     setError(null);
     try {
-      const updated = await updateFlashcard(card.card_id, {
-        question: editDraft.question.trim(),
-        options: editDraft.options.map((o) => o.trim()).filter(Boolean),
-        answer: editDraft.answer.trim(),
-      });
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      const updated = await updateFlashcard(
+        card.card_id,
+        {
+          question: editDraft.question.trim(),
+          options: editDraft.options.map((o) => o.trim()).filter(Boolean),
+          answer: editDraft.answer.trim(),
+        },
+        token
+      );
 
       setBlogs((prev) =>
         prev.map((b) =>
@@ -213,7 +223,9 @@ export default function FlashcardsTab({
     setDismissingCardId(card.card_id);
     setError(null);
     try {
-      await dismissFlashcard(card.card_id);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      await dismissFlashcard(card.card_id, token);
       setBlogs((prev) =>
         prev.map((b) =>
           b.blog_id === card.blog_id
@@ -238,7 +250,9 @@ export default function FlashcardsTab({
     setApprovingCardId(card.card_id);
     setError(null);
     try {
-      const updated = await approveFlashcard(card.card_id);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      const updated = await approveFlashcard(card.card_id, token);
       setBlogs((prev) =>
         prev.map((b) =>
           b.blog_id === card.blog_id
@@ -292,15 +306,21 @@ export default function FlashcardsTab({
     setSavingCustomForBlog((prev) => ({ ...prev, [blogId]: true }));
     setError(null);
     try {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
       const nonEmptyOptions = draft.options
         .map((o) => o.trim())
         .filter((o) => o.length > 0 && !/^[A-D]\)$/.test(o));
 
-      const created = await createCustomFlashcard(blogId, {
-        question: draft.question.trim(),
-        options: nonEmptyOptions,
-        answer: draft.answer.trim(),
-      });
+      const created = await createCustomFlashcard(
+        blogId,
+        {
+          question: draft.question.trim(),
+          options: nonEmptyOptions,
+          answer: draft.answer.trim(),
+        },
+        token
+      );
 
       setBlogs((prev) =>
         prev.map((b) =>
@@ -344,7 +364,9 @@ export default function FlashcardsTab({
     setRawErrorByBlog((prev) => ({ ...prev, [blogId]: null }));
 
     try {
-      await submitBlogRawText(blogId, rawText, rawTitle || undefined);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      await submitBlogRawText(blogId, rawText, token, rawTitle || undefined);
       setRawTextByBlog((prev) => ({ ...prev, [blogId]: "" }));
       await loadBlogs(true);
     } catch (err) {

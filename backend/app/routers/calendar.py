@@ -1,12 +1,13 @@
 import calendar
+from typing import Annotated
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.config import DEFAULT_USER_ID
+from app.auth import get_current_user
 from app.database import get_db
-from app.models import Blog, UserBlog
+from app.models import Blog, User, UserBlog
 from app.schemas import (
     CalendarMonthResponse,
     DayCalendarStatus,
@@ -40,6 +41,7 @@ def _calculate_streak(logged_dates: set[date], today_date: date) -> int:
 
 @router.get("/calendar", response_model=CalendarMonthResponse)
 def get_calendar_month(
+    current_user: Annotated[User, Depends(get_current_user)],
     month: str | None = Query(
         default=None, description="Month in YYYY-MM format (defaults to current month)"
     ),
@@ -74,7 +76,7 @@ def get_calendar_month(
     rows = db.execute(
         select(UserBlog, Blog)
         .join(Blog, UserBlog.blog_id == Blog.id)
-        .where(UserBlog.user_id == DEFAULT_USER_ID)
+        .where(UserBlog.user_id == current_user.id)
         .order_by(UserBlog.logged_date.desc(), UserBlog.id.desc())
     ).all()
 
@@ -129,6 +131,7 @@ def get_calendar_month(
 @router.post("/blogs/log", response_model=LoggedBlogEntry)
 def log_blog(
     payload: LogBlogRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> LoggedBlogEntry:
     raw_url = (payload.url or "").strip()
@@ -191,7 +194,7 @@ def log_blog(
 
     existing_user_blog = db.execute(
         select(UserBlog).where(
-            UserBlog.user_id == DEFAULT_USER_ID,
+            UserBlog.user_id == current_user.id,
             UserBlog.blog_id == blog.id,
             UserBlog.logged_date == payload.logged_date,
         )
@@ -201,7 +204,7 @@ def log_blog(
         user_blog = existing_user_blog
     else:
         user_blog = UserBlog(
-            user_id=DEFAULT_USER_ID,
+            user_id=current_user.id,
             blog_id=blog.id,
             logged_date=payload.logged_date,
         )
@@ -229,6 +232,7 @@ def log_blog(
 def submit_raw_text_for_blog(
     blog_id: int,
     payload: SubmitRawTextRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ) -> LoggedBlogEntry:
     blog = db.execute(select(Blog).where(Blog.id == blog_id)).scalar_one_or_none()
@@ -256,7 +260,7 @@ def submit_raw_text_for_blog(
         db.execute(
             select(UserBlog)
             .where(
-                UserBlog.user_id == DEFAULT_USER_ID,
+                UserBlog.user_id == current_user.id,
                 UserBlog.blog_id == blog.id,
             )
             .order_by(UserBlog.logged_date.desc())

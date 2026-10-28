@@ -20,6 +20,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+import { ClerkProvider } from "@clerk/nextjs";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +30,18 @@ export default function RootLayout({
   const envMap = process.env as Record<string, string | undefined>;
   const runtimeApiUrl =
     envMap["BACKEND_API_URL"] || envMap["NEXT_PUBLIC_API_URL"] || "";
+  const clerkPublishableKey =
+    envMap["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] ||
+    envMap["CLERK_PUBLISHABLE_KEY"] ||
+    "";
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <head>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
+      <html
+        lang="en"
+        suppressHydrationWarning
+        className={`${inter.variable} ${jetbrainsMono.variable}`}
+      >
+        <head>
         {runtimeApiUrl ? (
           <script
             dangerouslySetInnerHTML={{
@@ -40,10 +51,14 @@ export default function RootLayout({
             }}
           />
         ) : null}
-      </head>
-      <body className="font-sans antialiased selection:bg-ink selection:text-manila-card">
-        {children}
-      </body>
-    </html>
+        </head>
+        <body
+          suppressHydrationWarning
+          className="font-sans antialiased selection:bg-ink selection:text-manila-card"
+        >
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

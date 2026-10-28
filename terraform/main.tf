@@ -121,9 +121,12 @@ resource "null_resource" "build_and_push_images" {
     backend_dockerfile = filesha256("${path.module}/../backend/Dockerfile")
     backend_src_hash = sha256(join("", [
       filesha256("${path.module}/../backend/app/main.py"),
+      filesha256("${path.module}/../backend/app/auth.py"),
+      filesha256("${path.module}/../backend/app/models.py"),
       filesha256("${path.module}/../backend/app/routers/calendar.py"),
       filesha256("${path.module}/../backend/app/routers/flashcards.py"),
       filesha256("${path.module}/../backend/app/routers/anki.py"),
+      filesha256("${path.module}/../backend/app/routers/user.py"),
     ]))
     frontend_dockerfile = filesha256("${path.module}/../frontend/Dockerfile")
     frontend_src_hash = sha256(join("", [
@@ -131,6 +134,8 @@ resource "null_resource" "build_and_push_images" {
       filesha256("${path.module}/../frontend/src/app/page.tsx"),
       filesha256("${path.module}/../frontend/src/components/CalendarTab.tsx"),
       filesha256("${path.module}/../frontend/src/components/FlashcardsTab.tsx"),
+      filesha256("${path.module}/../frontend/src/components/SettingsModal.tsx"),
+      filesha256("${path.module}/../frontend/src/middleware.ts"),
     ]))
     repo_id = google_artifact_registry_repository.docker_repo.id
   }
@@ -247,6 +252,10 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "*"
       }
       env {
+        name  = "CLERK_ISSUER_URL"
+        value = var.clerk_issuer_url
+      }
+      env {
         name  = "IMAGE_REVISION_HASH"
         value = null_resource.build_and_push_images.triggers["backend_src_hash"]
       }
@@ -299,6 +308,14 @@ resource "google_cloud_run_v2_service" "frontend" {
       env {
         name  = "NEXT_PUBLIC_API_URL"
         value = google_cloud_run_v2_service.backend.uri
+      }
+      env {
+        name  = "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+        value = var.clerk_publishable_key
+      }
+      env {
+        name  = "CLERK_SECRET_KEY"
+        value = var.clerk_secret_key
       }
       env {
         name  = "IMAGE_REVISION_HASH"

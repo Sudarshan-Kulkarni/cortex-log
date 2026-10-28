@@ -2,7 +2,7 @@ from collections.abc import Generator
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from app.config import DATABASE_URL, DEFAULT_USER_ID
+from app.config import DATABASE_URL
 
 connect_args = (
     {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
@@ -33,15 +33,3 @@ def init_db() -> None:
     from app.models import User  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
-    with SessionLocal() as db:
-        existing_user = db.execute(
-            select(User).where(User.id == DEFAULT_USER_ID)
-        ).scalar_one_or_none()
-        if existing_user is None:
-            default_user = User(
-                id=DEFAULT_USER_ID,
-                email="engineer@cortexlog.dev",
-                name="Default Engineer",
-            )
-            db.add(default_user)
-            db.commit()
