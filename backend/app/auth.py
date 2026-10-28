@@ -67,8 +67,8 @@ def get_current_user(
         return user
 
     # Case 2: Clerk JWT (Next.js Web App)
-    # For local/testing environments:
-    if token_str == "test_token":
+    # Only allow test_token in explicit test mode or when CLERK_ISSUER_URL is unset locally:
+    if (not CLERK_ISSUER or os.environ.get("TESTING") == "1") and token_str == "test_token":
         user = db.execute(select(User).where(User.email == "test@example.com")).scalar_one_or_none()
         if not user:
             user = User(clerk_user_id="test_sub", email="test@example.com", name="Test User")

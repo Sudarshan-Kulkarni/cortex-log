@@ -33,7 +33,7 @@ class APIKey(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    prefix: Mapped[str] = mapped_column(String(8), nullable=False)
+    prefix: Mapped[str] = mapped_column(String(16), nullable=False)
     hashed_key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
