@@ -30,8 +30,12 @@ export default function RootLayout({
   const envMap = process.env as Record<string, string | undefined>;
   const runtimeApiUrl =
     envMap["BACKEND_API_URL"] || envMap["NEXT_PUBLIC_API_URL"] || "";
+  const clerkPublishableKey =
+    envMap["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] ||
+    envMap["CLERK_PUBLISHABLE_KEY"] ||
+    "";
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
       <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
         <head>
         {runtimeApiUrl ? (

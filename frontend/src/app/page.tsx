@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Calendar, Layers, Terminal, Settings } from "lucide-react";
-import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { UserButton, Show, SignInButton } from "@clerk/nextjs";
 import CalendarTab from "@/components/CalendarTab";
 import FlashcardsTab from "@/components/FlashcardsTab";
 import SettingsModal from "@/components/SettingsModal";
@@ -68,7 +68,7 @@ export default function HomePage() {
             </button>
 
             <div className="flex items-center gap-4 ml-4 pl-4 border-l border-ink/30">
-              <SignedIn>
+              <Show when="signed-in">
                 <button
                   type="button"
                   onClick={() => setShowSettings(true)}
@@ -77,15 +77,15 @@ export default function HomePage() {
                 >
                   <Settings className="w-4 h-4" />
                 </button>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
-              <SignedOut>
+                <UserButton />
+              </Show>
+              <Show when="signed-out">
                 <SignInButton mode="modal">
                   <button className="blueprint-btn px-4 py-2 text-xs">
                     Sign In
                   </button>
                 </SignInButton>
-              </SignedOut>
+              </Show>
             </div>
           </nav>
         </div>
