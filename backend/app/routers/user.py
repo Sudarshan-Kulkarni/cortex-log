@@ -52,7 +52,7 @@ def create_api_key(
 ):
     raw_token = f"cl_pat_{secrets.token_urlsafe(32)}"
     hashed_key = hashlib.sha256(raw_token.encode()).hexdigest()
-    prefix = raw_token[:8]
+    prefix = raw_token[:12] # cl_pat_ + 5 chars
 
     new_key = APIKey(
         user_id=current_user.id,

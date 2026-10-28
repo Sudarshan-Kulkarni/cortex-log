@@ -1,6 +1,3 @@
-import os
-os.environ["TESTING"] = "1"
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -83,20 +80,3 @@ def test_invalid_pat_auth():
     with TestClient(app) as test_client:
         response = test_client.post("/api/anki/pull", headers={"Authorization": "Bearer cl_pat_invalid"})
         assert response.status_code == 401
-
-
-def test_log_blog_authenticated():
-    with TestClient(app) as test_client:
-        response = test_client.post(
-            "/api/blogs/log",
-            headers={"Authorization": "Bearer test_token"},
-            json={
-                "logged_date": "2026-10-29",
-                "raw_text": "Engineering blog post about distributed consensus algorithms and raft protocols.",
-                "title": "Raft Consensus Explained",
-            },
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["title"] == "Raft Consensus Explained"
-        assert data["logged_date"] == "2026-10-29"

@@ -30,17 +30,9 @@ export default function RootLayout({
   const envMap = process.env as Record<string, string | undefined>;
   const runtimeApiUrl =
     envMap["BACKEND_API_URL"] || envMap["NEXT_PUBLIC_API_URL"] || "";
-  const clerkPublishableKey =
-    envMap["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"] ||
-    envMap["CLERK_PUBLISHABLE_KEY"] ||
-    "";
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey}>
-      <html
-        lang="en"
-        suppressHydrationWarning
-        className={`${inter.variable} ${jetbrainsMono.variable}`}
-      >
+    <ClerkProvider>
+      <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
         <head>
         {runtimeApiUrl ? (
           <script
@@ -52,10 +44,7 @@ export default function RootLayout({
           />
         ) : null}
         </head>
-        <body
-          suppressHydrationWarning
-          className="font-sans antialiased selection:bg-ink selection:text-manila-card"
-        >
+        <body className="font-sans antialiased selection:bg-ink selection:text-manila-card">
           {children}
         </body>
       </html>

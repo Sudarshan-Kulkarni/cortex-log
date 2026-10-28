@@ -49,22 +49,3 @@ variable "frontend_image" {
   type        = string
   default     = ""
 }
-
-variable "clerk_publishable_key" {
-  description = "Clerk Publishable Key (pk_test_... or pk_live_...) for Next.js frontend"
-  type        = string
-  default     = ""
-}
-
-variable "clerk_secret_key" {
-  description = "Clerk Secret Key (sk_test_... or sk_live_...) for Next.js frontend"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "clerk_issuer_url" {
-  description = "Clerk Issuer URL (e.g. https://<your-app>.clerk.accounts.dev) for FastAPI backend JWT verification"
-  type        = string
-  default     = ""
-}

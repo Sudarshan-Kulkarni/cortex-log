@@ -23,7 +23,6 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useAuth } from "@clerk/nextjs";
 import {
   AnkiQueueStatus,
   approveFlashcard,
@@ -50,7 +49,6 @@ interface CardDraft {
 export default function FlashcardsTab({
   onSwitchToCalendar,
 }: FlashcardsTabProps) {
-  const { getToken } = useAuth();
   const [blogs, setBlogs] = useState<LoggedBlogAccordion[]>([]);
   const [ankiStatus, setAnkiStatus] = useState<AnkiQueueStatus>({
     deck_name: "Cortex Log",
